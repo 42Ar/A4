@@ -1,11 +1,11 @@
 {
-    "name": "Lamp 1",
-    "device_id": "dev-001",
-    "device_stats_interval": 5,
+    "name": "",
+    "device_id": "",
+    "device_stats_interval": 20,
     "wifi": {
       "ssid": "WLAN-9G3521",
       "password": "nUO6HI0JphjIhff97GQk",
-      "ip": "192.168.1.11",
+      "ip": "",
       "mask": "255.255.255.0",
       "gw": "192.168.1.1"
     },

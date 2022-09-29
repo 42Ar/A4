@@ -1,0 +1,18 @@
+{
+    "name": "Lamp 4",
+    "device_id": "main-lamp-4",
+    "device_stats_interval": 20,
+    "wifi": {
+        "ssid": "WLAN-9G3521",
+        "password": "nUO6HI0JphjIhff97GQk",
+        "ip": "192.168.1.24",
+        "mask": "255.255.255.0",
+        "gw": "192.168.1.1"
+    },
+    "mqtt": {
+        "host": "192.168.1.1"
+    },
+    "ota": {
+        "enabled": true
+    }
+}
