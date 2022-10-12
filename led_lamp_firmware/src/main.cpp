@@ -28,6 +28,12 @@ unsigned static int target_fps = 60;
 uint32_t color;
 bool main_on = true;
 
+constexpr int bounce_obj = 5;
+long last_bounce = 0;
+static float bounce_x[bounce_obj];
+static float bounce_v[bounce_obj];
+static float bounce_charge[bounce_obj];
+
 
 void set_main(bool new_state);
 
@@ -36,6 +42,10 @@ void set_strip_color(uint32_t color){
     strip.setPixelColor(i, color);
   }
   strip.show();
+}
+
+uint32_t ints_to_color(int red, int green, int blue){
+  return green << 16 | red << 8 | blue;
 }
 
 String effect_to_name(int id){
@@ -47,7 +57,22 @@ String effect_to_name(int id){
     case 4: return "fire";
     case 5: return "alert";
     case 6: return "matrix";
+    case 7: return "bounce";
     default: return "???";
+  }
+}
+
+void init_effect(){
+  if(effect == 0 || effect == 4 || effect == 6){
+    set_strip_color(0);
+  }else if(effect == 7){
+    for(int i = 0; i < bounce_obj; i++){
+      bounce_x[i] = float(random(10000))/10000;
+      bounce_charge[i] = random(2)*2 - 1;
+      bounce_v[i] = 0;
+    }
+    set_strip_color(ints_to_color(255, 255, 255));
+    last_bounce = millis();
   }
 }
 
@@ -59,9 +84,7 @@ void set_effect(int new_effect){
   if(effect != 0){
     set_main(false);
   }
-  if(effect == 0 || effect == 4 || effect == 6){
-    set_strip_color(0);
-  }
+  init_effect();
   node.setProperty("effect").send(effect_to_name(effect));
 }
 
@@ -75,10 +98,6 @@ void set_main(bool new_main_on){
   }
   digitalWrite(RELAY_PIN, !main_on);
   node.setProperty("main").send(main_on?"true":"false");
-}
-
-uint32_t ints_to_color(int red, int green, int blue){
-  return green << 16 | red << 8 | blue;
 }
 
 bool string_to_color(const String &color, uint32 &res){
@@ -110,6 +129,8 @@ bool effect_handler(const HomieRange &range, const String &value){
     new_effect = 5;
   }else if(value == "matrix"){
     new_effect = 6;
+  }else if(value == "bounce"){
+    new_effect = 7;
   }else{
     return false;
   }
@@ -152,6 +173,48 @@ bool speed_handler(const HomieRange &range, const String &value){
   effect_speed = value.toFloat();
   node.setProperty("speed").send(String(effect_speed));
   return true;
+}
+
+
+void next_frame_bounce(){
+  unsigned long cur = millis();
+  int dt = effect_speed*(cur - last_bounce)*0.1;
+  last_bounce = cur;
+  for(int i = 0; i < bounce_obj; i++){
+    float F = 0;
+    for(int j = 0; j < bounce_obj; j++){
+      if(i != j){
+        float d = bounce_x[j] - bounce_x[i];
+        if(d > 0.5){
+          d = d - 1;
+        }else if(d < -0.5){
+          d = d + 1;
+        }
+        F -= 0.0005*bounce_charge[i]*bounce_charge[j]*d;
+      }
+    }
+    bounce_v[i] += F*dt;
+  }
+  for(int i = 0; i < bounce_obj; i++){
+    bounce_x[i] += bounce_v[i]*dt;
+    if(bounce_x[i] >= 1){
+      bounce_x[i] -= 1;
+    }else if(bounce_x[i] < 0){
+      bounce_x[i] += 1;
+    }
+  }
+  for(int i = 0; i < strip.numPixels(); i++){
+    strip.setPixelColor(i, ints_to_color(100, 100, 100));
+  }
+  for(int i = 0; i < bounce_obj; i++){
+    int led = int(round(LED_COUNT*bounce_x[i]))%LED_COUNT;
+    if(bounce_charge[i] > 0){
+      strip.setPixelColor(led, ints_to_color(255, 0, 0));
+    }else{
+      strip.setPixelColor(led, ints_to_color(0, 0, 255));
+    }
+  }
+  strip.show();
 }
 
 void next_frame_chill(){
@@ -222,6 +285,9 @@ void effect_next_frame(){
       break;
     case 6:
       next_frame_matrix();
+      break;
+    case 7:
+      next_frame_bounce();
       break;
   }
 }
