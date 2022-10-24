@@ -375,7 +375,6 @@ void setup(){
   node.advertise("speed").setDatatype("float").settable(speed_handler);
   node.advertise("main").setDatatype("boolean").settable(main_handler);
   Homie.setup();
-  WiFi.setSleepMode(WIFI_NONE_SLEEP);
 }
 
 void loop(){
