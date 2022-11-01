@@ -1,4 +1,4 @@
-20386315559995545
+20387980585083564
 Audio_Module
 Reverb_BTDR-1H
 Digital Reverberation Unit, http://www.belton.co.kr/inc/downfile.php?seq=17&file=pdf (footprint from http://www.uk-electronic.de/PDF/BTDR-1.pdf)
@@ -86019,6 +86019,13 @@ Varistor
 RV_Disc_D21.5mm_W11.4mm_P10mm
 Varistor, diameter 21.5mm, width 11.4mm, pitch 10mm
 varistor SIOV
+0
+2
+2
+proj_footprints
+CHP5R5L504R-TW
+
+
 0
 2
 2
