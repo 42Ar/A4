@@ -175,7 +175,6 @@ bool speed_handler(const HomieRange &range, const String &value){
   return true;
 }
 
-
 void next_frame_bounce(){
   unsigned long cur = millis();
   int dt = effect_speed*(cur - last_bounce)*0.1;
@@ -292,60 +291,6 @@ void effect_next_frame(){
   }
 }
 
-float calc_temp(){
-  float U = analogRead(A0)/1023.0f;
-  float I1 = U/TEMP_R3;
-  float U1 = I1*(TEMP_R2 + TEMP_R3);
-  float I0 = (TEMP_U0 - U1)/TEMP_R1;
-  if(I0 - I1 <= 0){
-    return -100;
-  }
-  float R = U1/(I0 - I1);
-  float T0 = 25 + 273.15;
-  float B = 3950;
-  float v = log(R/TEMP_RT)/B + 1/T0;
-  if(v <= 0){
-    return -100;
-  }
-  float t = 1/v - 273.15;
-  if(t < -100){
-    return -100;
-  }
-  return t;
-}
-
-void homie_loop(){
-  bool ready = Homie.isConnected() && Homie.isConfigured();
-  static unsigned long last_temp_report = 0;
-  unsigned long cur = millis();
-  if(ready && cur - last_temp_report > TEMP_SAMPLE_INTERVAL){
-    last_temp_report = cur;
-    float temp = calc_temp();
-    node.setProperty("temp").send(String(temp));
-    rst_info *rtc_info = system_get_rst_info();
-    node.setProperty("reset-cause").send(String(rtc_info->reason));
-  }
-  static unsigned long last_frame = 0, skips = 0, frames = 0;
-  cur = millis();
-  if(cur - last_frame > 1000/target_fps){
-    last_frame = cur;
-    effect_next_frame();
-    frames += 1;
-  }else{
-    skips += 1;
-  }
-  static unsigned long last_perf_report = 0;
-  cur = millis();
-  
-  if(ready && cur - last_perf_report > PERF_REPORT_INTERVAL){
-    node.setProperty("load").send(String(frames*100.0f/(frames + skips)));
-    node.setProperty("fps").send(String(frames*1000.0f/(cur - last_perf_report)));
-    last_perf_report = cur;
-    frames = 0;
-    skips = 0;
-  }
-}
-
 void setup(){
   pinMode(RELAY_PIN, OUTPUT);
   digitalWrite(RELAY_PIN, 0);
@@ -364,7 +309,6 @@ void setup(){
 #ifdef DISABLE_LOGGING
   Homie.disableLogging();
 #endif
-  Homie.setLoopFunction(homie_loop);
 
   node.advertise("temp").setDatatype("float").setUnit("°C");
   node.advertise("reset-cause").setDatatype("integer");
@@ -380,6 +324,27 @@ void setup(){
 void loop(){
   Homie.loop();
   
+  static unsigned long last_frame = 0, skips = 0, frames = 0;
+  unsigned long cur = millis();
+  if(cur - last_frame > 1000/target_fps){
+    last_frame = cur;
+    effect_next_frame();
+    frames += 1;
+  }else{
+    skips += 1;
+  }
+  static unsigned long last_perf_report = 0;
+  cur = millis();
+
+  bool ready = Homie.isConnected() && Homie.isConfigured();
+  if(ready && cur - last_perf_report > PERF_REPORT_INTERVAL){
+    node.setProperty("load").send(String(frames*100.0f/(frames + skips)));
+    node.setProperty("fps").send(String(frames*1000.0f/(cur - last_perf_report)));
+    last_perf_report = cur;
+    frames = 0;
+    skips = 0;
+  }
+
   // this is a workaround, since disableResetTrigger disables hardware and software reset
   if(HomieInternals::Interface::get().reset.resetFlag){
     HomieInternals::Interface::get().getConfig().erase();
