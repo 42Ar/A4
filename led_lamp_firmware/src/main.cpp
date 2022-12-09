@@ -6,8 +6,14 @@
 #define FW_VERSION "1.0.0"
 #define BRAND      "A4-IOT"
 
+// old board
 #define RELAY_PIN D5
 #define STRIP_PIN D6
+
+// new board
+// #define RELAY_PIN D2
+// #define STRIP_PIN D1
+
 #define LED_COUNT 85
 #define TEMP_U0 3.3
 #define TEMP_R1 10e3
@@ -58,6 +64,7 @@ String effect_to_name(int id){
     case 5: return "alert";
     case 6: return "matrix";
     case 7: return "bounce";
+    case 8: return "xmas";
     default: return "???";
   }
 }
@@ -73,6 +80,12 @@ void init_effect(){
     }
     set_strip_color(ints_to_color(255, 255, 255));
     last_bounce = millis();
+  }else if(effect == 8){
+    for(int i = 0; i < strip.numPixels(); i++){
+      int cell = double(i)/(strip.numPixels() - 1)*18;
+      strip.setPixelColor(i, ints_to_color(255*(cell&1), 255*(!(cell&1)), 0));
+    }
+    strip.show();
   }
 }
 
@@ -131,6 +144,8 @@ bool effect_handler(const HomieRange &range, const String &value){
     new_effect = 6;
   }else if(value == "bounce"){
     new_effect = 7;
+  }else if(value == "xmas"){
+    new_effect = 8;
   }else{
     return false;
   }
