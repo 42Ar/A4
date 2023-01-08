@@ -18,7 +18,7 @@ extension_length = 3;
 zip_tie_width = 2.8;
 zip_tie_h = 1.1;
 lily_pad_size = 10;
-lily_pad_height = 0.3;
+lily_pad_height = 0.4;
 hole_move_down = 2;
 
 n_led = floor(PI*(hole_dist - 2*dist_offset)*led_per_meter/1e3);
@@ -38,7 +38,7 @@ module holder_ring(h, outer){
 
 module end_cap(){
     translate([0, -hole_dist/2, 0]) rotate([0, 0, 45]) translate([0, adjusted_r - extension_length - led_holder_width + 0.001, strip_center_height - strip_width/2]) union(){
-        translate([0, -lily_pad_size + extension_length, strip_width - lily_pad_height]) cube([lily_pad_size, lily_pad_size, lily_pad_height]);
+        translate([zip_tie_width + 1, -lily_pad_size + extension_length, strip_width - lily_pad_height]) cube([lily_pad_size, lily_pad_size, lily_pad_height]);
         difference(){
             cube([led_holder_width, extension_length, strip_width]);
             translate([0, extension_length - zip_tie_h, strip_width/2 - zip_tie_width/2]) cube([led_holder_width, zip_tie_h, zip_tie_width]);

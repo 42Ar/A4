@@ -6,13 +6,16 @@
 #define FW_VERSION "1.0.0"
 #define BRAND      "A4-IOT"
 
-// old board
-#define RELAY_PIN D5
-#define STRIP_PIN D6
+//=== old board
+// #define RELAY_PIN D5
+// #define LED_PIN D6
 
-// new board
-// #define RELAY_PIN D2
-// #define STRIP_PIN D1
+//=== new board
+#define RELAY_PIN 5u
+#define LED_PIN 4u
+#define RESET_BTN_PIN 13u
+#define DISABLE_LOGGING
+
 
 #define LED_COUNT 85
 #define TEMP_U0 3.3
@@ -23,9 +26,8 @@
 #define TEMP_SAMPLE_INTERVAL 20e3
 #define PERF_REPORT_INTERVAL 20e3
 
-#define DISABLE_LOGGING
 
-Adafruit_NeoPixel strip(LED_COUNT, STRIP_PIN, NEO_RGB + NEO_KHZ800);
+Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, NEO_RGB + NEO_KHZ800);
 HomieNode node("lamp", "Lamp", "lamp");
 float temp = -100;
 float effect_speed = 1;
@@ -163,16 +165,6 @@ bool main_handler(const HomieRange &range, const String &value){
     return false;
   }
   set_main(new_main_on);
-  return true;
-}
-
-bool cmd_handler(const HomieRange &range, const String &value){
-  if(value == "reset"){
-      Homie.reset();
-  }else{
-    return false;
-  }
-  node.setProperty("cmd").send(value);
   return true;
 }
 
@@ -320,7 +312,11 @@ void setup(){
 #endif
   Homie_setBrand(BRAND);
   Homie_setFirmware(FW_NAME, FW_VERSION);
+#ifdef RESET_BTN_PIN
+  Homie.setResetTrigger(RESET_BTN_PIN, LOW, 2000);
+#else
   Homie.disableResetTrigger();
+#endif
 #ifdef DISABLE_LOGGING
   Homie.disableLogging();
 #endif
@@ -330,7 +326,6 @@ void setup(){
   node.advertise("sleep-mode").setDatatype("integer");
   node.advertise("effect").settable(effect_handler);
   node.advertise("color").settable(color_handler);
-  node.advertise("cmd").settable(cmd_handler);
   node.advertise("speed").setDatatype("float").settable(speed_handler);
   node.advertise("main").setDatatype("boolean").settable(main_handler);
   Homie.setup();
@@ -358,12 +353,5 @@ void loop(){
     last_perf_report = cur;
     frames = 0;
     skips = 0;
-  }
-
-  // this is a workaround, since disableResetTrigger disables hardware and software reset
-  if(HomieInternals::Interface::get().reset.resetFlag){
-    HomieInternals::Interface::get().getConfig().erase();
-    HomieInternals::Interface::get().getConfig().setHomieBootModeOnNextBoot(HomieBootMode::CONFIGURATION);
-    ESP.restart();
   }
 }

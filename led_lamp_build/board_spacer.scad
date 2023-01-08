@@ -1,4 +1,4 @@
-h = 4;
+h = 6.5;
 inner_d = 3.2;
 outer_d = inner_d + 2*2;
 $fn=100;
