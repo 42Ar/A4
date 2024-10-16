@@ -67,6 +67,7 @@ String effect_to_name(int id){
     case 6: return "matrix";
     case 7: return "bounce";
     case 8: return "xmas";
+    case 9: return "displayframes";
     default: return "???";
   }
 }
@@ -165,6 +166,29 @@ bool main_handler(const HomieRange &range, const String &value){
     return false;
   }
   set_main(new_main_on);
+  return true;
+}
+
+bool frame_handler(const HomieRange &range, const String &value){
+  for(int i = 0; i < strip.numPixels(); i++){
+    int off = i*2*3;
+    if(off + 2*3 >= value.length()){
+      return false;
+    }
+    uint32_t color = 0;
+    for(int j = 0; j < 6; j++){
+      color <<= 4;
+      char c = value[off + j];
+      if(c >= 'a' && c <= 'f'){
+        color |= c - 'a' + 9;
+      }else if(c >= '0' && c <= '9'){
+        color |= c - '0';
+      }else{
+        return false;
+      }
+    }
+    strip.setPixelColor(i, color);
+  }
   return true;
 }
 
@@ -328,6 +352,7 @@ void setup(){
   node.advertise("color").settable(color_handler);
   node.advertise("speed").setDatatype("float").settable(speed_handler);
   node.advertise("main").setDatatype("boolean").settable(main_handler);
+  node.advertise("frame").settable(frame_handler);
   Homie.setup();
 }
 
